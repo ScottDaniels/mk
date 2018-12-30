@@ -1,0 +1,5 @@
+
+This is a fork of the Plan-9 make utility (mk) from the Ningaui repo.
+The intent is to provide an easy way to build mk without needing to 
+clone the entire Ningaui repo, and to fix several of the compiler 
+warnings found in the original code.

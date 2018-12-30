@@ -1,0 +1,7 @@
+
+Per the original Plan-9 licence this file documents the ammendments to 
+the relivent code (lib/* and mk directories).
+
+Date			Author/Org			Changes
+2018 Dec 30		E. Scott Daniels	Eliminate compiler warning
+									Streamline build of libraries to support just mk (no istall)

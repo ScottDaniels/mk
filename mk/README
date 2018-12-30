@@ -1,0 +1,13 @@
+This software was packaged for Unix by Russ Cox.
+Please send comments to rsc@swtch.com.
+
+http://swtch.com/plan9port/unix
+
+
+NOTE:
+The build environment (make) has been limited in this fork of the 
+original code. Only gnu make is supported and the assumption is
+that object files have an .o exension and libraries have an .a 
+extension.  The goal is simple: build a statically linked mk
+binary.
+

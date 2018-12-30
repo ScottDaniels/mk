@@ -1,0 +1,164 @@
+#!/usr/bin/env ksh
+# probably runs with bash, but don't temp fate.
+
+#	Bootstrap allowing build of mk.  Requires gnu make :(
+#	This build was slightly streamlined from the original Ningaui
+#	version.
+
+trap abort ERR
+
+function abort
+{
+	echo "something failed -- exiting bad"
+}
+
+set -e
+
+function my_ranlib
+{
+	if whence ranlib >/dev/null 2>&1
+	then
+		(	
+			set -e
+			cd .lib
+			ranlib *.a
+		)
+	fi
+}
+
+# build evertying: libraries that mk needs, then mk itself.
+#
+function all
+{
+	SYSNAME=$( uname ); 
+	OBJTYPE=$( uname -m | sed 's;i.86;386;; s;/.*;;; s; ;;g' )
+	export OBJTYPE
+	export SYSNAME
+
+	work_d=$PWD
+
+	for x in $libdirs
+	do
+		(
+		echo "all: $x -----------------------"
+		cd $x
+		$make $opts install					# install places .a files into .lib/
+		)
+	done
+
+	my_ranlib 
+	export LD_LIBRARY_PATH=$work_d/.lib
+	for x in $dirs
+	do
+		(
+		echo "all: $x -----------------------"
+		cd $x
+		$make $opts
+		)
+	done
+}
+
+# clean --------------------------------------------
+function clean 
+{
+	rm -f .lib
+
+	for x in $dirs $libdirs
+	do
+		(
+		echo "clean: $x -----------------------"
+		cd $x
+		$make $opts clean
+		)
+	done
+}
+
+
+# install -----------------------------------------
+function install
+{
+	if [[ ! -d $PKG_ROOT/bin ]]
+	then
+		if ! mkdir $PKG_ROOT/bin 
+		then
+			echo "abort: unable to make dir: $PKG_ROOT/bin"
+			exit 1
+		fi
+	fi
+
+	echo "install: $x ---------------------------"
+	(
+		cd mk; 
+		if [[ -f $PKG_ROOT/bin/mk ]]
+		then
+			mv -f $PKG_ROOT/bin/mk $PKG_ROOT/bin/mk-; 
+		fi
+		cp mk $PKG_ROOT/bin/mk
+	)
+}
+
+# ----------------------------------------------------------
+
+PKG_ROOT=${PKG_ROOT:-$HOME}
+
+export GLMK_CC=gcc	
+
+
+while [[ $1 == -* ]]
+do
+	case $1 in
+		-n) opts+="-n";;
+		-\?) 
+			echo "usage: $0 [-n] [-t target_dir]"
+			echo "build mk (static binary) and install into $PKG_ROOT/bin"
+			echo "use -t to install into a different directory"
+			exit 0
+			;;
+	esac
+
+	shift
+	
+done
+
+if [[ ! -d .lib ]]
+then
+	mkdir .lib
+fi
+
+libdirs="lib/libbio lib/libfmt lib/libregexp lib/libutf"
+dirs="mk"
+make=${MAKE:-make}
+
+if [[ ! -d $PKG_ROOT ]]
+then
+	echo "PKG_ROOT directory not set or not found:  pkg_root=${PKG_ROOT:-unset}"
+	exit 1
+fi
+
+if [[ -z $1 ]]
+then
+	what="clean all install"
+else
+	what="$@"
+fi
+
+if [[ -z $MAKE ]]
+then
+	if whence gmake >/dev/null 2>&1
+	then
+		make=gmake
+	fi
+fi
+
+for task in $what
+do
+	case $task in 
+		all)		all;;
+		clean|nuke) 	clean;;
+		inst*)		install;;
+		*)			echo "unknonwn task: $task"; 
+					exit 1
+					;;
+	esac
+done
+
