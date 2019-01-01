@@ -61,7 +61,7 @@ function all
 # clean --------------------------------------------
 function clean 
 {
-	rm -f .lib
+	rm -rf .lib/*
 
 	for x in $dirs $libdirs
 	do
